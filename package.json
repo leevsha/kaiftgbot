@@ -16,6 +16,7 @@
     "nodemon": "^2.0.19"
   },
   "devDependencies": {
-    "google-auth-library": "^8.1.0"
+    "google-auth-library": "^8.1.0",
+    "googleapis": "^105.0.0"
   }
 }
