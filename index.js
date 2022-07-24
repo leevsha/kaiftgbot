@@ -1,4 +1,3 @@
-const fs = require('fs');
 const TelegramApi = require('node-telegram-bot-api');
 const { google } = require('googleapis');
 const { GoogleAuth } = require('google-auth-library');
@@ -7,6 +6,7 @@ require('dotenv').config();
 
 const token = process.env.TGTOKEN;
 const spreadsheetId = process.env.spreadsheetTOKEN;
+const googleCredentials = JSON.parse(process.env.googleCREDENTIALS);
 
 const bot = new TelegramApi(token, { polling: true });
 
@@ -79,7 +79,7 @@ async function ask(chatId) {
 
 async function sheetsAutomate() {
     const auth = new GoogleAuth({
-        keyFile: './credentials.json',
+        credentials: googleCredentials,
         scopes: SCOPES
     });
     const client = await auth.getClient();
@@ -97,7 +97,7 @@ async function sheetsAutomate() {
 
 async function readEvents() {
     const auth = new GoogleAuth({
-        keyFile: './credentials.json',
+        credentials: googleCredentials,
         scopes: SCOPES
     });
     const client = await auth.getClient();
