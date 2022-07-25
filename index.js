@@ -90,7 +90,7 @@ async function sheetsAutomate() {
         range: `${dateSheets}!A:A`,
         valueInputOption: 'USER_ENTERED',
         resource: {
-            values: name.split(', ').map(el => [el])
+            values: name && name.split(', ').map(el => [el])
         }
     })
 }
