@@ -51,7 +51,7 @@ const start = () => {
         } else if (data === 'No') {
             await bot.deleteMessage(chatId, msg.message.message_id);
             await bot.sendMessage(chatId, 'Повторно напиши фамилию(и) и имя(имена)');
-            return ask(chatId);
+            return ask();
         }
         eventsArr.forEach(async element => {
             if (element.includes(data)) {
@@ -62,15 +62,16 @@ const start = () => {
                 await bot.sendMessage(chatId, `Теперь отправь мне своё фамилию и имя. Если ты записываешь несколько людей - напиши их имена через запятую.`);
                 await bot.sendMessage(chatId, `Пример:
 Ивавов Иван, Васильев Вася, Настюхина Настя`);
-                await ask(chatId);
+                await ask();
                 return;
             }
         });
     })
 }
 
-async function ask(chatId) {
+async function ask() {
     return bot.once('message', async message => {
+        let chatId = message.chat.id;
         let checkInTxt = message.text;
         name = checkInTxt;
         return bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name}?`, btns);
