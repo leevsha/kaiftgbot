@@ -19,7 +19,6 @@ const btns = {
 }
 
 
-
 let name;
 let eventsArr;
 let dateSheets;
@@ -33,7 +32,7 @@ const start = () => {
         let chatId = msg.chat.id;
         if (text === '/check_in') {
             await bot.sendMessage(chatId, 'Добро пожаловать в KAЇF Bot. Здесь ты можешь записать себя и своих друзей в гест лист. Выбери пожалуйста дату, на которую ты хотел(-а) бы записать себя и своих друзей');
-            let dateBtns = await readEvents();
+            const dateBtns = await readEvents();
             return bot.sendMessage(chatId, `На какое число ты хочешь записаться?`, dateBtns);
         }
         if (text === '/start') {
@@ -51,33 +50,35 @@ const start = () => {
         } else if (data === 'No') {
             await bot.deleteMessage(chatId, msg.message.message_id);
             await bot.sendMessage(chatId, 'Повторно напиши фамилию(и) и имя(имена)');
-            bot.once('message', async message => {
-                let chatId = message.chat.id;
-                let checkInTxt = message.text;
-                name = checkInTxt;
-                await bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name}?`, btns);
-            })
-        }
-        eventsArr.forEach(async element => {
-            if (element.includes(data)) {
-                place = element[1];
-                dateSheets = data;
-                await bot.deleteMessage(chatId, msg.message.message_id);
-                await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
-                await bot.sendMessage(chatId, `Теперь отправь мне своё фамилию и имя. Если ты записываешь несколько людей - напиши их имена через запятую.`);
-                await bot.sendMessage(chatId, `Пример:
+            await ask(chatId);
+        } else {
+            eventsArr.forEach(async element => {
+                if (data === element[0]) {
+                    place = element[1];
+                    dateSheets = data;
+                    await bot.deleteMessage(chatId, msg.message.message_id);
+                    await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
+                    await bot.sendMessage(chatId, `Теперь отправь мне своё фамилию и имя. Если ты записываешь несколько людей - напиши их имена через запятую.`);
+                    await bot.sendMessage(chatId, `Пример:
 Ивавов Иван, Васильев Вася, Настюхина Настя`);
-                bot.once('message', async message => {
-                    let chatId = message.chat.id;
-                    let checkInTxt = message.text;
-                    name = checkInTxt;
-                    await bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name}?`, btns);
-                })
-            }
-        });
+                    await ask(chatId);
+                }
+            });
+        }
     })
 }
 
+async function ask(chatId) {
+    bot.once('message', async message => {
+        if (chatId === message.chat.id) {
+            let checkInTxt = message.text;
+            name = checkInTxt;
+            await bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name}?`, btns);
+        } else{
+            await ask(chatId)
+        }
+    })
+}
 
 async function sheetsAutomate() {
     const auth = new GoogleAuth({
