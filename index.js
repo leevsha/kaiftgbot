@@ -18,8 +18,7 @@ const btns = {
     })
 }
 
-
-let name;
+let name = {};
 let eventsArr;
 let dateSheets;
 let place;
@@ -44,7 +43,8 @@ const start = () => {
         let data = msg.data;
         let chatId = msg.message.chat.id
         if (data === 'Yes') {
-            sheetsAutomate();
+            sheetsAutomate(name[chatId]);
+            delete name[chatId];
             await bot.deleteMessage(chatId, msg.message.message_id);
             return bot.sendMessage(chatId, 'Спасибо, что воспользовались ботом для записи в гест лист! Ждем тебя(вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Так же не забывай заходить в наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чатик</a>', { parse_mode: 'HTML' })
         } else if (data === 'No') {
@@ -58,7 +58,7 @@ const start = () => {
                     dateSheets = data;
                     await bot.deleteMessage(chatId, msg.message.message_id);
                     await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
-                    await bot.sendMessage(chatId, `Теперь отправь мне своё фамилию и имя. Если ты записываешь несколько людей - напиши их имена через запятую.`);
+                    await bot.sendMessage(chatId, `Теперь отправь мне своё фамилию и имя в порядке ФАМИЛИЯ ИМЯ. Если ты записываешь несколько людей - напиши их фамилию и имя через запятую.`);
                     await bot.sendMessage(chatId, `Пример:
 Ивавов Иван, Васильев Вася, Настюхина Настя`);
                     await ask(chatId);
@@ -72,15 +72,15 @@ async function ask(chatId) {
     bot.once('message', async message => {
         if (chatId === message.chat.id) {
             let checkInTxt = message.text;
-            name = checkInTxt;
-            await bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name}?`, btns);
-        } else{
+            name[message.from.id] = checkInTxt;
+            await bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name[message.from.id]}?`, btns);
+        } else {
             await ask(chatId)
         }
     })
 }
 
-async function sheetsAutomate() {
+async function sheetsAutomate(name) {
     const auth = new GoogleAuth({
         credentials: googleCredentials,
         scopes: SCOPES
