@@ -22,10 +22,12 @@ let name = {};
 let eventsArr;
 let dateSheets;
 let place;
+let latitude;
+let longitude;
 
 
 const start = () => {
-    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }])
+    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }, { command: '/feedback', description: 'Сообщить о проблеме/Предложить функционал' }])
     bot.on('message', async msg => {
         let text = msg.text;
         let chatId = msg.chat.id;
@@ -37,24 +39,34 @@ const start = () => {
         if (text === '/start') {
             return bot.sendMessage(chatId, 'Привет. Напиши пожалуйста команду /check_in, чтобы записаться в гест лист');
         }
+        if (text === '/feedback') {
+            return bot.sendMessage(chatId, 'Чтобы сообщить о проблеме или предложить функционал напишите разработчику бота - @nikita_chernysh');
+        }
     })
 
     bot.on('callback_query', async msg => {
         let data = msg.data;
         let chatId = msg.message.chat.id
+        if (data === 'Событий пока нету :(') {
+            await bot.deleteMessage(chatId, msg.message.message_id);
+            await bot.sendMessage(chatId, `Попробуй написать позже /check_in, скоро что-то точно появиться!`);
+        }
         if (data === 'Yes') {
             sheetsAutomate(name[chatId]);
             delete name[chatId];
             await bot.deleteMessage(chatId, msg.message.message_id);
-            return bot.sendMessage(chatId, 'Спасибо, что воспользовались ботом для записи в гест лист! Ждем тебя(вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Так же не забывай заходить в наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чатик</a>', { parse_mode: 'HTML' })
+            await bot.sendMessage(chatId, 'Спасибо, что воспользовались ботом для записи в гест лист! Ждем тебя(вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Так же не забывай заходить в наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чатик</a>', { parse_mode: 'HTML' })
+            await bot.sendLocation(chatId, latitude, longitude);
         } else if (data === 'No') {
             await bot.deleteMessage(chatId, msg.message.message_id);
             await bot.sendMessage(chatId, 'Повторно напиши фамилию(и) и имя(имена)');
             await ask(chatId);
         } else {
-            eventsArr.forEach(async element => {
+            eventsArr && eventsArr.forEach(async element => {
                 if (data === element[0]) {
                     place = element[1];
+                    latitude = element[2];
+                    longitude = element[3]
                     dateSheets = data;
                     await bot.deleteMessage(chatId, msg.message.message_id);
                     await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
@@ -70,6 +82,10 @@ const start = () => {
 
 async function ask(chatId) {
     bot.once('message', async message => {
+        if (message.text === '/start' || message.text === '/check_in' || message.text === '/feedback') {
+            await bot.sendMessage(chatId, 'Вы ввели команду, пожалуйста напишите /check_in, чтобы записаться в гест лист заново');
+            return;
+        }
         if (chatId === message.chat.id) {
             let checkInTxt = message.text;
             name[message.from.id] = checkInTxt;
@@ -111,11 +127,11 @@ async function readEvents() {
         range: 'Events'
     })
 
-    eventsArr = event.data.values;
+    eventsArr = event.data.values || ['Событий пока нету :('];
     const dateBtns = {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                eventsArr.map(el => ({ text: el[0], callback_data: el[0] }))
+                eventsArr[0] === 'Событий пока нету :(' ? [{ text: eventsArr[0], callback_data: eventsArr[0] }] : eventsArr.map(el => ({ text: el[0], callback_data: el[0] }))
             ]
         })
     }
