@@ -24,10 +24,11 @@ let dateSheets;
 let place;
 let latitude;
 let longitude;
+let clubsLocations;
 
 
 const start = () => {
-    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }, { command: '/feedback', description: 'Сообщить о проблеме/Предложить функционал' }])
+    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }, { command: '/feedback', description: 'Сообщить о проблеме/Предложить функционал' }, { command: '/location', description: 'Посмотреть расположение клубов' }])
     bot.on('message', async msg => {
         let text = msg.text;
         let chatId = msg.chat.id;
@@ -41,6 +42,10 @@ const start = () => {
         }
         if (text === '/feedback') {
             return bot.sendMessage(chatId, 'Чтобы сообщить о проблеме или предложить функционал напишите разработчику бота - @nikita_chernysh');
+        }
+        if (text === '/location') {
+            const clubNamesBtns = await readAllClubsLocation();
+            return bot.sendMessage(chatId, `Выбери клуб, расположение которого, ты хочешь посмотреть.`, clubNamesBtns);
         }
     })
 
@@ -77,13 +82,20 @@ const start = () => {
                 }
             });
         }
+        clubsLocations && clubsLocations.forEach(async element => {
+            if (data === element[0]) {
+                await bot.deleteMessage(chatId, msg.message.message_id);
+                await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
+                await bot.sendLocation(chatId, element[1], element[2]);
+            }
+        })
     })
 }
 
 async function ask(chatId) {
     bot.once('message', async message => {
-        if (message.text === '/start' || message.text === '/check_in' || message.text === '/feedback') {
-            await bot.sendMessage(chatId, 'Вы ввели команду, пожалуйста напишите /check_in, чтобы записаться в гест лист заново');
+        if (message.text === '/start' || message.text === '/check_in' || message.text === '/feedback' || message.text === '/location') {
+            await bot.sendMessage(chatId, 'Ты ввел(ввела) команду, пожалуйста напиши /check_in, чтобы записаться в гест лист заново');
             return;
         }
         if (chatId === message.chat.id) {
@@ -136,6 +148,30 @@ async function readEvents() {
         })
     }
     return dateBtns;
+}
+
+async function readAllClubsLocation() {
+    const auth = new GoogleAuth({
+        credentials: googleCredentials,
+        scopes: SCOPES
+    });
+    const client = await auth.getClient();
+    const sheets = await google.sheets({ version: 'v4', auth: client });
+    let event = await sheets.spreadsheets.values.get({
+        auth,
+        spreadsheetId,
+        range: 'All clubs'
+    })
+
+    clubsLocations = event.data.values
+    const clubNamesBtns = {
+        reply_markup: JSON.stringify({
+            inline_keyboard: [
+                clubsLocations.map(el => ({ text: el[0], callback_data: el[0] }))
+            ]
+        })
+    }
+    return clubNamesBtns;
 }
 
 start();
