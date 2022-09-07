@@ -94,7 +94,7 @@ const start = () => {
 
 async function ask(chatId) {
     bot.once('message', async message => {
-        if (message.text === '/start' || message.text === '/check_in' || message.text === '/feedback' || message.text === '/location') {
+        if ((message.text === '/start' || message.text === '/check_in' || message.text === '/feedback' || message.text === '/location') && message.from.id === chatId) {
             await bot.sendMessage(chatId, 'Ты ввел(ввела) команду, пожалуйста напиши /check_in, чтобы записаться в гест лист заново');
             return;
         }
