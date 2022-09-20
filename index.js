@@ -57,7 +57,7 @@ const start = () => {
             await bot.sendMessage(chatId, `Попробуй написать позже /check_in, скоро что-то точно появиться!`);
         }
         if (data === 'Yes') {
-            sheetsAutomate(name[chatId]);
+            await sheetsAutomate(name[chatId], msg.from.username ? msg.from.username : msg.from.last_name ? msg.from.first_name + ' ' + msg.from.last_name : msg.from.first_name);
             delete name[chatId];
             await bot.deleteMessage(chatId, msg.message.message_id);
             await bot.sendMessage(chatId, 'Спасибо, что воспользовались ботом для записи в гест лист! Ждем тебя(вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Так же не забывай заходить в наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чатик</a>', { parse_mode: 'HTML' })
@@ -108,7 +108,7 @@ async function ask(chatId) {
     })
 }
 
-async function sheetsAutomate(name) {
+async function sheetsAutomate(name, username) {
     const auth = new GoogleAuth({
         credentials: googleCredentials,
         scopes: SCOPES
@@ -121,7 +121,7 @@ async function sheetsAutomate(name) {
         range: `${dateSheets}!A:A`,
         valueInputOption: 'USER_ENTERED',
         resource: {
-            values: name && name.split(', ').map(el => [el])
+            values: name && name.split(', ').map(el => [el, username])
         }
     })
 }
