@@ -28,7 +28,7 @@ let clubsLocations;
 
 
 const start = () => {
-    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }, { command: '/feedback', description: 'Сообщить о проблеме/Предложить функционал' }, { command: '/location', description: 'Посмотреть расположение клубов' }])
+    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }, { command: '/feedback', description: 'Сообщить о проблеме/Предложить функционал' }, { command: '/location', description: 'Посмотреть расположение клубов' }, { command: '/photos', description: 'Посмотреть фотографии с вечеринок' }])
     bot.on('message', async msg => {
         let text = msg.text;
         let chatId = msg.chat.id;
@@ -46,6 +46,14 @@ const start = () => {
         if (text === '/location') {
             const clubNamesBtns = await readAllClubsLocation();
             return bot.sendMessage(chatId, `Выбери клуб, расположение которого, ты хочешь посмотреть.`, clubNamesBtns);
+        }
+        if (text === '/photos') {
+            let photosArr = await readAllPhotos();
+            let message = '';
+            photosArr.forEach(element => {
+                message += element.reduce((prev, next) => prev + ' - ' + next + '\n');
+            })
+            return bot.sendMessage(chatId, message);
         }
     })
 
@@ -94,7 +102,7 @@ const start = () => {
 
 async function ask(chatId) {
     bot.once('message', async message => {
-        if ((message.text === '/start' || message.text === '/check_in' || message.text === '/feedback' || message.text === '/location') && message.from.id === chatId) {
+        if ((message.text === '/start' || message.text === '/check_in' || message.text === '/feedback' || message.text === '/location' || message.text === '/photos') && message.from.id === chatId) {
             await bot.sendMessage(chatId, 'Ты ввел(ввела) команду, пожалуйста напиши /check_in, чтобы записаться в гест лист заново');
             return;
         }
@@ -172,6 +180,21 @@ async function readAllClubsLocation() {
         })
     }
     return clubNamesBtns;
+}
+
+async function readAllPhotos() {
+    const auth = new GoogleAuth({
+        credentials: googleCredentials,
+        scopes: SCOPES
+    });
+    const client = await auth.getClient();
+    const sheets = await google.sheets({ version: 'v4', auth: client });
+    let event = await sheets.spreadsheets.values.get({
+        auth,
+        spreadsheetId,
+        range: 'Photos'
+    })
+    return event.data.values;
 }
 
 start();
