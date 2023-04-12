@@ -32,6 +32,10 @@ const start = () => {
     bot.on('message', async msg => {
         let text = msg.text;
         let chatId = msg.chat.id;
+        let user = await readUser(chatId);
+        if (!user) {
+            await pasteUser(msg.from.username ? msg.from.username : msg.from.last_name ? msg.from.first_name + ' ' + msg.from.last_name : msg.from.first_name, chatId)
+        }
         if (text === '/check_in') {
             await bot.sendMessage(chatId, 'Добро пожаловать в KAЇF Bot. Здесь ты можешь записать себя и своих друзей в гест лист. Выбери пожалуйста дату, на которую ты хотел(-а) бы записать себя и своих друзей');
             const dateBtns = await readEvents();
@@ -54,6 +58,10 @@ const start = () => {
                 message += element.reduce((prev, next) => prev + ' - ' + next + '\n');
             })
             return bot.sendMessage(chatId, message);
+        }
+        if (text === process.env.specialcommand) {
+            let allUsers = await readAllUsers();
+            allUsers.forEach(async el => await bot.sendMessage(el[0], await readNewsLetterText()));
         }
     })
 
@@ -195,6 +203,70 @@ async function readAllPhotos() {
         range: 'Photos'
     })
     return event.data.values;
+}
+
+async function readUser(chatId) {
+    const auth = new GoogleAuth({
+        credentials: googleCredentials,
+        scopes: SCOPES
+    });
+    const client = await auth.getClient();
+    const sheets = await google.sheets({ version: 'v4', auth: client });
+    let event = await sheets.spreadsheets.values.get({
+        auth,
+        spreadsheetId,
+        range: 'Users'
+    })
+    let chatIds = event.data.values.map(el => el[0]);
+    return chatIds.find(elem => elem === chatId.toString());
+}
+
+async function pasteUser(username, chatId) {
+    const auth = new GoogleAuth({
+        credentials: googleCredentials,
+        scopes: SCOPES
+    });
+    const client = await auth.getClient();
+    const sheets = await google.sheets({ version: 'v4', auth: client });
+    await sheets.spreadsheets.values.append({
+        auth,
+        spreadsheetId,
+        range: `Users!A:A`,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+            values: [[chatId, username]]
+        }
+    })
+}
+
+async function readAllUsers() {
+    const auth = new GoogleAuth({
+        credentials: googleCredentials,
+        scopes: SCOPES
+    });
+    const client = await auth.getClient();
+    const sheets = await google.sheets({ version: 'v4', auth: client });
+    let event = await sheets.spreadsheets.values.get({
+        auth,
+        spreadsheetId,
+        range: 'Users!A:A'
+    })
+    return event.data.values;
+}
+
+async function readNewsLetterText() {
+    const auth = new GoogleAuth({
+        credentials: googleCredentials,
+        scopes: SCOPES
+    });
+    const client = await auth.getClient();
+    const sheets = await google.sheets({ version: 'v4', auth: client });
+    let event = await sheets.spreadsheets.values.get({
+        auth,
+        spreadsheetId,
+        range: 'News Letter Text!A1'
+    })
+    return event.data.values[0][0];
 }
 
 start();
