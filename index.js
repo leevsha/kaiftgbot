@@ -13,7 +13,7 @@ const bot = new TelegramApi(token, { polling: true });
 const btns = {
     reply_markup: JSON.stringify({
         inline_keyboard: [
-            [{ text: 'Да', callback_data: 'Yes' }, { text: 'Нет', callback_data: 'No' }]
+            [{ text: 'Так', callback_data: 'Yes' }, { text: 'Ні', callback_data: 'No' }]
         ]
     })
 }
@@ -28,7 +28,7 @@ let clubsLocations;
 
 
 const start = () => {
-    bot.setMyCommands([{ command: '/check_in', description: 'Записаться в гест лист' }, { command: '/feedback', description: 'Сообщить о проблеме/Предложить функционал' }, { command: '/location', description: 'Посмотреть расположение клубов' }, { command: '/photos', description: 'Посмотреть фотографии с вечеринок' }])
+    bot.setMyCommands([{ command: '/check_in', description: 'Записатись до списку гостей' }, { command: '/feedback', description: 'Сповістити про проблему/Запропонувати функціонал' }, { command: '/location', description: 'Подивитись місце знаходження клубів' }, { command: '/photos', description: 'Подивитись фотографії з вечірок' }])
     bot.on('message', async msg => {
         let text = msg.text;
         let chatId = msg.chat.id;
@@ -37,19 +37,19 @@ const start = () => {
             await pasteUser(msg.from.username ? msg.from.username : msg.from.last_name ? msg.from.first_name + ' ' + msg.from.last_name : msg.from.first_name, chatId)
         }
         if (text === '/check_in') {
-            await bot.sendMessage(chatId, 'Добро пожаловать в KAЇF Bot. Здесь ты можешь записать себя и своих друзей в гест лист. Выбери пожалуйста дату, на которую ты хотел(-а) бы записать себя и своих друзей');
+            await bot.sendMessage(chatId, 'Вітаємо у KAÏF Bot! Зараз ти можеш записати себе та своїх друзів на вечірку та отримати знижку 5€ на вхід.');
             const dateBtns = await readEvents();
-            return bot.sendMessage(chatId, `На какое число ты хочешь записаться?`, dateBtns);
+            return bot.sendMessage(chatId, `Вибери будь ласка дату вечірки на яку ти хотів(-ла) б піти`, dateBtns);
         }
         if (text === '/start') {
-            return bot.sendMessage(chatId, 'Привет. Напиши пожалуйста команду /check_in, чтобы записаться в гест лист');
+            return bot.sendMessage(chatId, 'Привіт. Напиши будь ласка команду /check_in, щоб записатись у список гостей');
         }
         if (text === '/feedback') {
-            return bot.sendMessage(chatId, 'Чтобы сообщить о проблеме или предложить функционал напишите разработчику бота - @nikita_chernysh');
+            return bot.sendMessage(chatId, 'Аби сповістити про проблему чи запропонувати функціонал пиши разробнику бота - @nikita_chernysh');
         }
         if (text === '/location') {
             const clubNamesBtns = await readAllClubsLocation();
-            return bot.sendMessage(chatId, `Выбери клуб, расположение которого, ты хочешь посмотреть.`, clubNamesBtns);
+            return bot.sendMessage(chatId, `Вибери клуб, розташування якого ти хочеш подивитись.`, clubNamesBtns);
         }
         if (text === '/photos') {
             let photosArr = await readAllPhotos();
@@ -68,19 +68,19 @@ const start = () => {
     bot.on('callback_query', async msg => {
         let data = msg.data;
         let chatId = msg.message.chat.id
-        if (data === 'Событий пока нету :(') {
+        if (data === 'Подій поки немає :(') {
             await bot.deleteMessage(chatId, msg.message.message_id);
-            await bot.sendMessage(chatId, `Попробуй написать позже /check_in, скоро что-то точно появиться!`);
+            await bot.sendMessage(chatId, `Спробуй написати пізніше /check_in, скоро щось точно з‘явиться!`);
         }
         if (data === 'Yes') {
             await sheetsAutomate(name[chatId], msg.from.username ? msg.from.username : msg.from.last_name ? msg.from.first_name + ' ' + msg.from.last_name : msg.from.first_name);
             delete name[chatId];
             await bot.deleteMessage(chatId, msg.message.message_id);
-            await bot.sendMessage(chatId, 'Спасибо, что воспользовались ботом для записи в гест лист! Ждем тебя(вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Так же не забывай заходить в наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чатик</a>', { parse_mode: 'HTML' })
+            await bot.sendMessage(chatId, 'Дякую, що скористався моєю допомогою. Чекаю на тебе (вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Також не забувай про наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чат😎</a>', { parse_mode: 'HTML' })
             await bot.sendLocation(chatId, latitude, longitude);
         } else if (data === 'No') {
             await bot.deleteMessage(chatId, msg.message.message_id);
-            await bot.sendMessage(chatId, 'Повторно напиши фамилию(и) и имя(имена)');
+            await bot.sendMessage(chatId, `Напиши ще раз прізвище(а) та ім‘я(імена)`);
             await ask(chatId);
         } else {
             eventsArr && eventsArr.forEach(async element => {
@@ -90,10 +90,10 @@ const start = () => {
                     longitude = element[3]
                     dateSheets = data;
                     await bot.deleteMessage(chatId, msg.message.message_id);
-                    await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
-                    await bot.sendMessage(chatId, `Теперь отправь мне своё фамилию и имя в порядке ФАМИЛИЯ ИМЯ. Если ты записываешь несколько людей - напиши их фамилию и имя через запятую.`);
-                    await bot.sendMessage(chatId, `Пример:
-Ивавов Иван, Васильев Вася, Настюхина Настя`);
+                    await bot.sendMessage(chatId, `Ти вибрав(-ла) ${data}`);
+                    await bot.sendMessage(chatId, `Тепер надішлм мені своє призвіще та ім‘я у порядку {ПРИЗВІЩЕ ІМ‘Я}. Якщо ти записуєш декілька людей тоді пиши їх призвіща та імена через кому.`);
+                    await bot.sendMessage(chatId, `Приклад:
+Іванов Іван, Дорошенко Сергій, Козакова Настя`);
                     await ask(chatId);
                 }
             });
@@ -101,7 +101,7 @@ const start = () => {
         clubsLocations && clubsLocations.forEach(async element => {
             if (data === element[0]) {
                 await bot.deleteMessage(chatId, msg.message.message_id);
-                await bot.sendMessage(chatId, `Ты выбрал(-а) ${data}`);
+                await bot.sendMessage(chatId, `Ти выбрав(-ла) ${data}`);
                 await bot.sendLocation(chatId, element[1], element[2]);
             }
         })
@@ -111,13 +111,13 @@ const start = () => {
 async function ask(chatId) {
     bot.once('message', async message => {
         if ((message.text === '/start' || message.text === '/check_in' || message.text === '/feedback' || message.text === '/location' || message.text === '/photos') && message.from.id === chatId) {
-            await bot.sendMessage(chatId, 'Ты ввел(ввела) команду, пожалуйста напиши /check_in, чтобы записаться в гест лист заново');
+            await bot.sendMessage(chatId, 'Ти написав(-ла) команду, будь ласка напиши /check_in, щоб записатись у список гостей заново');
             return;
         }
         if (chatId === message.chat.id) {
             let checkInTxt = message.text;
             name[message.from.id] = checkInTxt;
-            await bot.sendMessage(chatId, `Ты хочешь записать в гест лист ${name[message.from.id]}?`, btns);
+            await bot.sendMessage(chatId, `Ти хочеш записати у список гостей ${name[message.from.id]}?`, btns);
         } else {
             await ask(chatId)
         }
@@ -155,11 +155,11 @@ async function readEvents() {
         range: 'Events'
     })
 
-    eventsArr = event.data.values || ['Событий пока нету :('];
+    eventsArr = event.data.values || ['Подій поки немає :('];
     const dateBtns = {
         reply_markup: JSON.stringify({
             inline_keyboard: [
-                eventsArr[0] === 'Событий пока нету :(' ? [{ text: eventsArr[0], callback_data: eventsArr[0] }] : eventsArr.map(el => ({ text: el[0], callback_data: el[0] }))
+                eventsArr[0] === 'Подій поки немає :(' ? [{ text: eventsArr[0], callback_data: eventsArr[0] }] : eventsArr.map(el => ({ text: el[0], callback_data: el[0] }))
             ]
         })
     }
