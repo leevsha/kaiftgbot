@@ -76,7 +76,7 @@ const start = () => {
             await sheetsAutomate(name[chatId], msg.from.username ? msg.from.username : msg.from.last_name ? msg.from.first_name + ' ' + msg.from.last_name : msg.from.first_name);
             delete name[chatId];
             await bot.deleteMessage(chatId, msg.message.message_id);
-            await bot.sendMessage(chatId, 'Дякую, що скористався моєю допомогою. Чекаю на тебе (вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + 'Також не забувай про наш <a href="https://t.me/+SM1ykEKtE6RkYTcy">чат😎</a>', { parse_mode: 'HTML' })
+            await bot.sendMessage(chatId, 'Дякую, що скористався моєю допомогою. Чекаю на тебе (вас) ' + dateSheets + ' в ' + place + '\n' + '\n' + `Також не забувай про наш <a href="${process.env.tglink}">чат😎</a>`, { parse_mode: 'HTML' })
             await bot.sendLocation(chatId, latitude, longitude);
         } else if (data === 'No') {
             await bot.deleteMessage(chatId, msg.message.message_id);
