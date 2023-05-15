@@ -61,7 +61,13 @@ const start = () => {
         }
         if (text === process.env.specialcommand) {
             let allUsers = await readAllUsers();
-            allUsers.forEach(async el => await bot.sendMessage(el[0], await readNewsLetterText()));
+            allUsers.forEach(async function (el) {
+                try {
+                    await bot.sendMessage(el[0], await readNewsLetterText())
+                } catch (error) {
+
+                }
+            })
         }
     })
 
